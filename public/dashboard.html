@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>粮全其美 · 数据看板</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e1726; --bg2:#152033; --bg3:#0a1018;
+  --line:#1f2c40; --line2:#2a3a55;
+  --txt:#e5e9f0; --txt2:#9aa3b5; --txt3:#6b7587;
+  --amber:#f5a524; --amber2:#c8821a;
+  --blue:#3b82f6; --blue2:#2563eb;
+  --ok:#22c55e;
+}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:13px; line-height:1.5; min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+/* ============ 顶部头 ============ */
+header{
+  padding:18px 24px 14px;
+  display:flex; align-items:center; gap:14px;
+  border-bottom:1px solid var(--line);
+}
+.logo{
+  width:38px; height:38px;
+  background:transparent;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--amber);
+}
+.brand h1{font-size:20px; font-weight:600; color:var(--amber); letter-spacing:1px}
+.brand .sub{font-size:12px; color:var(--txt3); margin-top:2px}
+
+/* ============ 顶部控制面板 ============ */
+.control-panel{
+  background:var(--bg2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  margin:14px 24px 0;
+  padding:14px 18px 12px;
+}
+
+/* ============ 时间按钮组 ============ */
+.time-bar{
+  display:flex; gap:6px;
+  flex-wrap:wrap;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:12px;
+}
+.tbtn{
+  background:transparent; color:var(--txt2);
+  border:1px solid var(--line2); border-radius:6px;
+  padding:5px 12px; font:inherit; font-size:13px;
+  cursor:pointer; transition:all .15s;
+}
+.tbtn:hover{color:var(--txt); border-color:#3a5070}
+.tbtn.on{
+  background:var(--amber); color:#1a1a1a;
+  border-color:var(--amber); font-weight:600;
+}
+
+/* ============ 筛选条 ============ */
+.filter-bar{
+  display:flex; gap:14px 18px;
+  align-items:end;
+  flex-wrap:wrap;
+}
+.fitem{display:flex; flex-direction:column; gap:5px}
+.fitem label{font-size:12px; color:var(--txt2)}
+.fitem input,.fitem select{
+  background:var(--bg3); color:var(--txt);
+  border:1px solid var(--line2); border-radius:6px;
+  padding:6px 10px; font:inherit; font-size:13px;
+  min-width:140px; height:32px;
+  outline:none;
+}
+.fitem input::placeholder{color:var(--txt3)}
+.fitem input:focus,.fitem select:focus{border-color:var(--amber)}
+.fitem input[type="date"]{
+  color-scheme:dark;
+  position:relative;
+  padding-right:30px;
+}
+.fitem input[type="date"]::-webkit-calendar-picker-indicator{
+  position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  width:18px; height:18px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5a524' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='5' width='18' height='16' rx='2'/><line x1='3' y1='10' x2='21' y2='10'/><line x1='8' y1='3' x2='8' y2='7'/><line x1='16' y1='3' x2='16' y2='7'/></svg>");
+  background-size:16px 16px; background-repeat:no-repeat; background-position:center;
+  cursor:pointer; opacity:1; filter:none;
+}
+.fitem input[type="date"]::-webkit-calendar-picker-indicator:hover{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f7b34a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='5' width='18' height='16' rx='2'/><line x1='3' y1='10' x2='21' y2='10'/><line x1='8' y1='3' x2='8' y2='7'/><line x1='16' y1='3' x2='16' y2='7'/></svg>");
+}
+.fitem select{
+  appearance:none; -webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%239aa3b5' fill='none' stroke-width='1.5'/></svg>");
+  background-repeat:no-repeat; background-position:right 10px center;
+  padding-right:28px;
+}
+.actions{display:flex; gap:10px; align-self:end}
+.btn{
+  border:none; border-radius:6px; padding:0 22px;
+  height:32px; font:inherit; font-size:13px;
+  cursor:pointer; font-weight:500;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.btn-primary{background:var(--amber); color:#1a1a1a; font-weight:600}
+.btn-primary:hover{background:#f7b34a}
+.btn-ghost{background:transparent; color:var(--blue); border:1px solid var(--blue)}
+.btn-ghost:hover{background:rgba(59,130,246,.08)}
+
+/* ============ 汇总信息 ============ */
+.summary{
+  padding:10px 0 0;
+  margin-top:10px;
+  border-top:1px solid var(--line);
+  font-size:13px; color:var(--txt2);
+}
+.summary em{color:var(--amber); font-style:normal; font-weight:600}
+
+/* ============ Tab ============ */
+.tabs{
+  padding:14px 24px 0;
+  display:flex; gap:6px;
+  border-bottom:1px solid var(--line);
+}
+.tab{
+  background:transparent; color:var(--txt2);
+  border:none;
+  padding:9px 22px; font:inherit; font-size:14px;
+  cursor:pointer; position:relative;
+  border-radius:8px 8px 0 0;
+}
+.tab:hover{color:var(--txt)}
+.tab.on{
+  color:var(--amber); font-weight:600;
+  background:var(--bg2);
+  border:1px solid var(--line);
+  border-bottom:1px solid var(--bg2);
+  position:relative; top:1px;
+}
+
+/* ============ 表格 ============ */
+.panel{
+  padding:14px 24px 30px;
+  background:var(--bg);
+}
+.table-wrap{
+  border:1px solid var(--line); border-radius:8px;
+  overflow:hidden; background:var(--bg2);
+  box-shadow:0 4px 14px rgba(0,0,0,.25);
+}
+.t-scroll{max-height:calc(100vh - 360px); overflow:auto}
+table{width:100%; border-collapse:collapse; white-space:nowrap; font-size:13px}
+thead{position:sticky; top:0; z-index:5}
+thead th{
+  background:#1c2940; color:var(--txt);
+  font-weight:600; font-size:13px;
+  text-align:left; padding:11px 14px;
+  border-bottom:2px solid #2a3a55;
+  border-right:1px solid #243349;
+}
+thead th:last-child{border-right:none}
+tbody td{
+  padding:9px 14px; border-bottom:1px solid #1d2939;
+  color:var(--txt); font-variant-numeric:tabular-nums;
+}
+tbody tr:nth-child(even){background:#162031}
+tbody tr:hover{background:#1f2d44 !important}
+.num{text-align:right}
+.cn{color:var(--amber); font-weight:600; cursor:pointer}
+.cn:hover{text-decoration:underline}
+.check-badge{
+  display:inline-block; padding:0 5px; margin-left:4px;
+  border-radius:3px; font-size:10px; font-weight:600;
+  background:#2d1f08; color:var(--amber);
+  vertical-align:middle; line-height:16px;
+  cursor:pointer;
+}
+tr.has-check{background:#131d2f !important}
+tr.has-check:hover{background:#1a2940 !important}
+.tfoot td{
+  background:#1c2940; color:var(--txt2); font-weight:600;
+  border-top:2px solid #2a3a55;
+}
+.empty{text-align:center; padding:60px; color:var(--txt3)}
+footer{
+  text-align:center; padding:18px; color:var(--txt3); font-size:12px;
+  border-top:1px solid var(--line); margin-top:14px;
+}
+
+/* 顶部行间距 & 布局 */
+.shell{max-width:1640px; margin:0 auto}
+
+/* ============ 门店子 Tab ============ */
+.store-tabs{display:flex;gap:6px;padding:10px 24px 0;margin-bottom:-4px}
+.stab{
+  background:transparent;color:var(--txt2);font:inherit;font-size:13px;
+  border:1px solid var(--line2);border-radius:6px;padding:5px 16px;
+  cursor:pointer;transition:all .15s;}
+.stab:hover{color:var(--txt);border-color:#3a5070}
+.stab.on{background:var(--amber);color:#1a1a1a;border-color:var(--amber);font-weight:600}
+
+/* 穿透弹窗 */
+.modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:36px 16px;overflow:auto}
+.modal-mask{position:absolute;inset:0;background:rgba(7,16,33,.72);backdrop-filter:blur(4px)}
+.modal-card{position:relative;width:min(880px,100%);background:linear-gradient(180deg,#0e1f3a 0%,#0a152b 100%);border:1px solid #1f3559;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.55);overflow:hidden}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;padding:18px 24px 14px;border-bottom:1px solid #1f3559}
+.m-eyebrow{font-size:12px;color:#7ea0d6;letter-spacing:1px;margin-bottom:4px}
+.m-title{font-size:18px;color:#f4f8ff;font-weight:700;margin-bottom:4px}
+.m-sub{font-size:13px;color:#9eb3d8}
+.modal-close{background:transparent;color:#9eb3d8;border:1px solid #2a3f63;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:13px;transition:.15s}
+.modal-close:hover{background:#1c2c4d;color:#fff;border-color:#4a6ea8}
+.modal-body{padding:16px 24px 22px;max-height:60vh;overflow:auto}
+.drill-table{width:100%;border-collapse:collapse;font-size:13px}
+.drill-table th{text-align:left;color:#9eb3d8;background:#0e1d36;font-weight:500;padding:10px 12px;border-bottom:1px solid #1f3559;position:sticky;top:0}
+.drill-table th.num{text-align:right}
+.drill-table td{padding:12px;border-bottom:1px solid #142544;color:#dde6f7}
+.drill-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.drill-table tbody tr:hover{background:#15294d}
+.drill-table .nat-in{color:#39d77d;font-weight:600}
+.drill-table .nat-out{color:#ff6b6b;font-weight:600}
+.drill-table .pos{color:#39d77d}
+.drill-table .neg{color:#ff6b6b}
+.drill-table .chk{color:#60a5fa}
+.drill-table .zero{color:#5a7099}
+.drill-table .dash{color:#5a7099;text-align:center}
+.drill-empty{text-align:center;padding:40px 0;color:#7ea0d6;font-size:13px}
+/* 门店表格可点击 */
+#st-tbody tr{cursor:pointer}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <rect x="3"  y="13" width="3.5" height="8"  fill="currentColor"/>
+        <rect x="9"  y="8"  width="3.5" height="13" fill="currentColor"/>
+        <rect x="15" y="3"  width="3.5" height="18" fill="currentColor"/>
+      </svg>
+    </div>
+    <div class="brand">
+      <h1>粮全其美</h1>
+      <div class="sub">按商品与仓库汇总期初、期末与区间出入库。点击行可查看明细。</div>
+    </div>
+  </header>
+
+  <!-- 顶部控制面板：时间切换 + 筛选 + 汇总（仓库/门店共用容器） -->
+  <div class="control-panel">
+    <!-- 时间切换 -->
+    <div class="time-bar" id="timeBar">
+      <button class="tbtn" data-r="today">今天</button>
+      <button class="tbtn" data-r="yesterday">昨天</button>
+      <button class="tbtn" data-r="week">本周</button>
+      <button class="tbtn" data-r="lastweek">上周</button>
+      <button class="tbtn on" data-r="month">本月</button>
+      <button class="tbtn" data-r="lastmonth">上月</button>
+      <button class="tbtn" data-r="quarter">本季度</button>
+      <button class="tbtn" data-r="lastquarter">上季度</button>
+      <button class="tbtn" data-r="year">今年</button>
+      <button class="tbtn" data-r="lastyear">去年</button>
+    </div>
+
+    <!-- 仓库筛选条 -->
+    <div class="filter-bar" id="whFilterBar">
+      <div class="fitem">
+        <label>开始日期</label>
+        <input type="date" id="wh-d1" onchange="rebuildWHTable()">
+      </div>
+      <div class="fitem">
+        <label>结束日期</label>
+        <input type="date" id="wh-d2" onchange="rebuildWHTable()">
+      </div>
+      <div class="fitem">
+        <label>仓库</label>
+        <select id="wh-wh" onchange="filterWH()">
+          <option value="">全部仓库</option>
+          <option value="顺丰嘉定仓">顺丰嘉定仓</option>
+          <option value="总部大仓">总部大仓</option>
+          <option value="鲜融嘉定仓">鲜融嘉定仓</option>
+        </select>
+      </div>
+      <div class="fitem">
+        <label>商品编号</label>
+        <input id="wh-code" oninput="filterWH()">
+      </div>
+      <div class="fitem">
+        <label>商品名称</label>
+        <input id="wh-name" oninput="filterWH()">
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="filterWH()">查询汇总</button>
+        <button class="btn btn-ghost" onclick="resetFilters('wh')">重置</button>
+        <button class="btn btn-ghost" onclick="exportTable('wh')">导出</button>
+      </div>
+    </div>
+
+    <!-- 门店筛选条 -->
+    <div class="filter-bar" id="stFilterBar" style="display:none">
+      <div class="fitem">
+        <label>开始日期</label>
+        <input type="date" id="st-d1" onchange="rebuildStoreTable()">
+      </div>
+      <div class="fitem">
+        <label>结束日期</label>
+        <input type="date" id="st-d2" onchange="rebuildStoreTable()">
+      </div>
+      <div class="fitem">
+        <label>商品编号</label>
+        <input id="st-code" oninput="filterST()">
+      </div>
+      <div class="fitem">
+        <label>商品名称</label>
+        <input id="st-name" oninput="filterST()">
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="filterST()">查询汇总</button>
+        <button class="btn btn-ghost" onclick="resetFilters('st')">重置</button>
+        <button class="btn btn-ghost" onclick="exportTable('st')">导出</button>
+      </div>
+    </div>
+
+    <!-- 汇总信息 -->
+    <div id="whSummary" class="summary">
+      区间 <em id="wh-sum-d1">—</em> ~ <em id="wh-sum-d2">—</em> · 流水 <em>0</em> 条 · 汇总 <em>0</em> 行
+    </div>
+    <div id="stSummary" class="summary" style="display:none">
+      区间 <em id="st-sum-d1">—</em> ~ <em id="st-sum-d2">—</em> · 流水 <em>0</em> 条 · 汇总 <em>0</em> 行
+    </div>
+  </div>
+
+  <!-- Tab -->
+  <div class="tabs">
+    <button class="tab on" data-tab="wh" onclick="switchTab('wh')">仓库数据</button>
+    <button class="tab" data-tab="st" onclick="switchTab('st')">门店数据</button>
+  </div>
+
+  <!-- 仓库 -->
+  <section class="panel" id="panel-wh">
+    <div class="table-wrap">
+      <div class="t-scroll">
+        <table id="wh-table">
+          <thead><tr>
+            <th>仓库名称</th>
+            <th>二级分类</th>
+            <th>商品编号</th>
+            <th>商品名称</th>
+            <th>规格/型号</th>
+            <th>基本单位</th>
+            <th>进货单价(元)</th>
+            <th>期初数量</th>
+            <th>期初金额</th>
+            <th>期初转换数量</th>
+            <th>入库数量</th>
+            <th>入库金额</th>
+            <th>出库数量</th>
+            <th>出库金额</th>
+            <th>期末数量</th>
+            <th>期末金额</th>
+            <th>期末转换数量</th>
+            <th>换算数1</th>
+          </tr></thead>
+          <tbody id="wh-tbody">
+          </tbody>
+          <tfoot><tr class="tfoot">
+            <td colspan="7">合计</td>
+            <td class="num" id="wh-sum-open">0</td>
+            <td class="num" id="wh-sum-open-amt">0</td>
+            <td class="num" id="wh-sum-open-conv">0</td>
+            <td class="num" id="wh-sum-in">0</td>
+            <td class="num" id="wh-sum-in-amt">0</td>
+            <td class="num" id="wh-sum-out">0</td>
+            <td class="num" id="wh-sum-out-amt">0</td>
+            <td class="num" id="wh-sum-close">0</td>
+            <td class="num" id="wh-sum-close-amt">0</td>
+            <td class="num" id="wh-sum-close-conv">0</td>
+            <td class="num" id="wh-sum-conv">0</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 门店 -->
+  <section class="panel" id="panel-st" style="display:none">
+    <div class="store-tabs">
+      <!-- 门店选项卡由 API 动态填充 -->
+    </div>
+    <div class="table-wrap">
+      <div class="t-scroll">
+        <table id="st-table">
+          <thead><tr><th>门店名称</th><th>二级分类</th><th>商品编号</th><th>商品名称</th><th>规格/型号</th><th>基本单位</th><th>进货单价(元)</th><th>期初数量</th><th>期初金额</th><th>期初转换数量</th><th>入库数量</th><th>入库金额</th><th>出库数量</th><th>出库金额</th><th>期末数量</th><th>期末金额</th><th>期末转换数量</th><th>换算数1</th></tr></thead>
+          <tbody id="st-tbody">
+          </tbody>
+          <tfoot><tr class="tfoot">
+            <td colspan="6">合计</td>
+            <td class="num" id="st-sum-open">0</td>
+            <td class="num" id="st-sum-open-amt">0</td>
+            <td class="num" id="st-sum-open-conv">0</td>
+            <td class="num" id="st-sum-in">0</td>
+            <td class="num" id="st-sum-in-amt">0</td>
+            <td class="num" id="st-sum-out">0</td>
+            <td class="num" id="st-sum-out-amt">0</td>
+            <td class="num" id="st-sum-close">0</td>
+            <td class="num" id="st-sum-close-amt">0</td>
+            <td class="num" id="st-sum-close-conv">0</td>
+            <td class="num" id="st-sum-conv">0</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+<footer>粮全其美 · 数据看板</footer>
+</div>
+
+<script>
+// ============ Tab 切换 ============
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
+  document.getElementById('panel-wh').style.display = (t==='wh'?'':'none');
+  document.getElementById('panel-st').style.display = (t==='st'?'':'none');
+  document.getElementById('whSummary').style.display = (t==='wh'?'':'none');
+  document.getElementById('stSummary').style.display = (t==='st'?'':'none');
+  document.getElementById('whFilterBar').style.display = (t==='wh'?'flex':'none');
+  document.getElementById('stFilterBar').style.display = (t==='st'?'flex':'none');
+  if(t==='st'){
+    if (document.querySelector('.store-tabs .stab')) {
+      restoreStore();
+    } else {
+      filterST();
+    }
+    recalcStoreSums(); 
+  }
+}
+
+// ============ 时间切换 ============
+(function(){
+  const today = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const ranges = {
+    today:      [new Date(today), new Date(today)],
+    yesterday:  [new Date(today.getFullYear(),today.getMonth(),today.getDate()-1),new Date(today.getFullYear(),today.getMonth(),today.getDate()-1)],
+    week:       [new Date(today.getFullYear(),today.getMonth(),today.getDate()-today.getDay()+1),new Date(today)],
+    lastweek:   [new Date(today.getFullYear(),today.getMonth(),today.getDate()-today.getDay()-6),new Date(today.getFullYear(),today.getMonth(),today.getDate()-today.getDay())],
+    month:      [new Date(today.getFullYear(),today.getMonth(),1),new Date(today)],
+    lastmonth:  [new Date(today.getFullYear(),today.getMonth()-1,1),new Date(today.getFullYear(),today.getMonth(),0)],
+    quarter:    [new Date(today.getFullYear(),Math.floor(today.getMonth()/3)*3,1),new Date(today)],
+    lastquarter:[new Date(today.getFullYear(),Math.floor(today.getMonth()/3)*3-3,1),new Date(today.getFullYear(),Math.floor(today.getMonth()/3)*3,0)],
+    year:       [new Date(today.getFullYear(),0,1),new Date(today)],
+    lastyear:   [new Date(today.getFullYear()-1,0,1),new Date(today.getFullYear()-1,11,31)],
+  };
+  document.querySelectorAll('#timeBar .tbtn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('#timeBar .tbtn').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      const [d1,d2] = ranges[b.dataset.r];
+      const v1=fmt(d1), v2=fmt(d2);
+      setAllDates(v1, v2);
+      rebuildWHTable();
+      rebuildStoreTable();
+    });
+  });
+
+  // 初始化日期输入框和汇总描述为"本月"
+  const initD1 = fmt(ranges.month[0]), initD2 = fmt(ranges.month[1]);
+  setAllDates(initD1, initD2);
+  window._initD1 = initD1; window._initD2 = initD2;
+})();
+
+function setAllDates(v1, v2) {
+  document.querySelectorAll('input[type=date]').forEach(i=>{
+    i.value = (i.id.endsWith('d1')||i.id==='wh-d1'||i.id==='st-d1')?v1:v2;
+  });
+  // 更新汇总描述中的日期
+  const sumD1s = document.querySelectorAll('#wh-sum-d1, #st-sum-d1');
+  const sumD2s = document.querySelectorAll('#wh-sum-d2, #st-sum-d2');
+  sumD1s.forEach(el => el.textContent = v1);
+  sumD2s.forEach(el => el.textContent = v2);
+}
+
+// ============ 产品元数据（从物料信息 e04doicnps01 动态获取，仓库和门店共用）============
+let _productMetaPromise = null;
+
+function fetchProductMeta() {
+  if (!_productMetaPromise) {
+    _productMetaPromise = fetch('/api/product-meta')
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(data => {
+        window._productMeta = data.map || {};
+        console.log(`物料元数据已加载: ${Object.keys(window._productMeta).length} 条`);
+      })
+      .catch(e => {
+        console.warn('物料元数据加载失败:', e);
+        window._productMeta = {};
+      });
+  }
+  return _productMetaPromise;
+}
+// 提前触发预加载
+fetchProductMeta();
+
+// ============ 数字解析 & 格式化 ============
+function parseNum(s){
+  if(!s) return 0;
+  const m = String(s).match(/-?\d+(?:\.\d+)?/);
+  return m?parseFloat(m[0]):0;
+}
+function fmtQty(v){
+  if(v === '' || v == null || isNaN(v)) return '0.00';
+  const n = Number(v);
+  return n.toFixed(2);
+}
+
+// ============ 筛选 & 合计 ============
+function filterRows(tbodyId, code, name, extraFilters){
+  const rows = document.querySelectorAll('#'+tbodyId+' tr');
+  let sum={open:0,oa:0,oc:0,in:0,ia:0,out:0,oa_out:0,close:0,ca:0,cc:0};
+  let visible=0;
+  rows.forEach(tr=>{
+    const c = tr.cells;
+    if(c.length < 5) return; // skip loading / placeholder rows
+    const codeVal = c[2]?c[2].textContent:'';
+    const nameVal = c[3]?c[3].textContent:'';
+    let show = true;
+    if(code && !codeVal.toLowerCase().includes(code)) show=false;
+    if(name && !nameVal.toLowerCase().includes(name)) show=false;
+    if(extraFilters){
+      for(const [idx,val] of Object.entries(extraFilters)){
+        if(!val) continue;
+        const cellText = c[idx]?c[idx].textContent:'';
+        if(!cellText.includes(val)) show=false;
+      }
+    }
+    tr.style.display = show?'':'none';
+    if(show){
+      visible++;
+      // WH: 7=期初数量 8=期初金额 9=期初转换 10=入库数量 11=入库金额 12=出库数量 13=出库金额 14=期末数量 15=期末金额 16=期末转换
+      if(tbodyId==='wh-tbody'){
+        sum.open   += parseNum(c[7].textContent);
+        sum.oa     += parseNum(c[8].textContent);
+        sum.oc     += parseNum(c[9].textContent);
+        sum.in     += parseNum(c[10].textContent);
+        sum.ia     += parseNum(c[11].textContent);
+        sum.out    += parseNum(c[12].textContent);
+        sum.oa_out += parseNum(c[13].textContent);
+        sum.close  += parseNum(c[14].textContent);
+        sum.ca     += parseNum(c[15].textContent);
+        sum.cc     += parseNum(c[16].textContent);
+      }else{
+        sum.open  += parseNum(c[8].textContent);
+        sum.in    += parseNum(c[9].textContent);
+        sum.out   += parseNum(c[10].textContent);
+        sum.close += parseNum(c[11].textContent);
+      }
+    }
+  });
+  return {sum,visible};
+}
+
+function filterWH(){
+  const code = document.getElementById('wh-code').value.trim().toLowerCase();
+  const name = document.getElementById('wh-name').value.trim().toLowerCase();
+  const wh   = document.getElementById('wh-wh').value;
+  const r = filterRows('wh-tbody', code, name, {0:wh});
+  document.getElementById('wh-sum-open').textContent        = r.sum.open.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('wh-sum-open-amt').textContent     = r.sum.oa.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('wh-sum-open-conv').textContent    = r.sum.oc.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('wh-sum-in').textContent           = r.sum.in.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('wh-sum-in-amt').textContent       = r.sum.ia.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('wh-sum-out').textContent          = r.sum.out.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('wh-sum-out-amt').textContent      = r.sum.oa_out.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('wh-sum-close').textContent        = r.sum.close.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('wh-sum-close-amt').textContent    = r.sum.ca.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('wh-sum-close-conv').textContent   = r.sum.cc.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('whSummary').innerHTML = (() => {
+    const m = window._whMeta || {};
+    const sc = (m.sourceCount||0).toLocaleString();
+    const gc = (m.groupCount||0).toLocaleString();
+    return `区间 <em>${document.getElementById('wh-d1').value}</em> ~ <em>${document.getElementById('wh-d2').value}</em> · 流水 <em>${sc}</em> 条 · 汇总 <em>${gc}</em> 行`;
+  })();
+}
+
+
+function filterStore(st){
+  window._activeStore = st;
+  document.querySelectorAll('.stab').forEach(b=>b.classList.toggle('on',b.dataset.st===st));
+  document.querySelectorAll('#st-tbody tr').forEach(tr=>{
+    tr.style.display = tr.dataset.store===st ? '' : 'none';
+  });
+  // 重新应用搜索筛选
+  filterST();
+}
+function restoreStore(){
+  // 记住用户选中的门店，重建 tab 后恢复，否则取第一个
+  const saved = window._activeStore;
+  const tabs = document.querySelectorAll('.store-tabs .stab');
+  const match = saved && [...tabs].find(b => b.dataset.st === saved);
+  const target = match || tabs[0];
+  if (target) {
+    filterStore(target.dataset.st);
+  } else {
+    // 没有门店 tab 时，仅刷新筛选
+    filterST();
+  }
+}
+function recalcStoreSums(){
+  let sum={open:0,oa:0,oc:0,in:0,ia:0,out:0,oa_out:0,close:0,ca:0,cc:0};
+  document.querySelectorAll('#st-tbody tr:not([style*="display: none"])').forEach(tr=>{
+    const c=tr.cells;
+    if(!c||c.length<18)return;
+    sum.open+=parseFloat(c[7].textContent)||0;
+    sum.oa+=parseFloat(c[8].textContent)||0;
+    sum.oc+=parseFloat(c[9].textContent)||0;
+    sum.in+=parseFloat(c[10].textContent)||0;
+    sum.ia+=parseFloat(c[11].textContent)||0;
+    sum.out+=parseFloat(c[12].textContent)||0;
+    sum.oa_out+=parseFloat(c[13].textContent)||0;
+    sum.close+=parseFloat(c[14].textContent)||0;
+    sum.ca+=parseFloat(c[15].textContent)||0;
+    sum.cc+=parseFloat(c[16].textContent)||0;
+  });
+  document.getElementById('st-sum-open').textContent=sum.open.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-open-amt').textContent=sum.oa.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-open-conv').textContent=sum.oc.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-in').textContent=sum.in.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-in-amt').textContent=sum.ia.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-out').textContent=sum.out.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-out-amt').textContent=sum.oa_out.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-close').textContent=sum.close.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-close-amt').textContent=sum.ca.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-close-conv').textContent=sum.cc.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function filterST(){
+  const code = document.getElementById('st-code').value.trim().toLowerCase();
+  const name = document.getElementById('st-name').value.trim().toLowerCase();
+  const currentStore = document.querySelector('.stab.on')?.dataset?.st || '';
+  let sum={open:0,oa:0,oc:0,in:0,ia:0,out:0,oa_out:0,close:0,ca:0,cc:0};
+  let visible=0;
+  document.querySelectorAll('#st-tbody tr').forEach(tr=>{
+    if(tr.dataset.store !== currentStore){tr.style.display='none';return;}
+    const c=tr.cells;
+    const codeVal=c[2]?c[2].textContent:'';
+    const nameVal=c[3]?c[3].textContent:'';
+    let show=true;
+    if(code && !codeVal.toLowerCase().includes(code)) show=false;
+    if(name && !nameVal.toLowerCase().includes(name)) show=false;
+    tr.style.display=show?'':'none';
+    if(show){
+      visible++;
+      sum.open+=parseFloat(c[7].textContent)||0;
+      sum.oa+=parseFloat(c[8].textContent)||0;
+      sum.oc+=parseFloat(c[9].textContent)||0;
+      sum.in+=parseFloat(c[10].textContent)||0;
+      sum.ia+=parseFloat(c[11].textContent)||0;
+      sum.out+=parseFloat(c[12].textContent)||0;
+      sum.oa_out+=parseFloat(c[13].textContent)||0;
+      sum.close+=parseFloat(c[14].textContent)||0;
+      sum.ca+=parseFloat(c[15].textContent)||0;
+      sum.cc+=parseFloat(c[16].textContent)||0;
+    }
+  });
+  document.getElementById('st-sum-open').textContent=sum.open.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-open-amt').textContent=sum.oa.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-open-conv').textContent=sum.oc.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-in').textContent=sum.in.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-in-amt').textContent=sum.ia.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-out').textContent=sum.out.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-out-amt').textContent=sum.oa_out.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-close').textContent=sum.close.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-close-amt').textContent=sum.ca.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-sum-close-conv').textContent=sum.cc.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('stSummary').innerHTML = (() => {
+    const m = window._stMeta || {};
+    const sc = (m.sourceCount||0).toLocaleString();
+    const gc = (m.groupCount||0).toLocaleString();
+    return `区间 <em>${document.getElementById('st-d1').value}</em> ~ <em>${document.getElementById('st-d2').value}</em> · 流水 <em>${sc}</em> 条 · 汇总 <em>${gc}</em> 行`;
+  })();
+}
+
+// ============ 门店表格动态重建（调用 /api/store-summary）============
+async function rebuildStoreTable() {
+  const d1 = document.getElementById('st-d1').value;
+  const d2 = document.getElementById('st-d2').value;
+  await fetchProductMeta();
+  const meta = window._productMeta || {};
+  const tbody = document.getElementById('st-tbody');
+
+  tbody.innerHTML = '<tr><td colspan="18" style="text-align:center;color:var(--amber);padding:20px">加载中…</td></tr>';
+
+  try {
+    const resp = await fetch(`/api/store-summary?startDate=${d1}&endDate=${d2}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const rows = data.rows || [];
+    const stores = data.stores || [];
+    window._stMeta = data.meta || { sourceCount: 0, groupCount: 0 };
+
+    // 重建门店选项卡
+    if (stores.length) {
+      const bar = document.querySelector('.store-tabs');
+      if (bar) {
+        bar.innerHTML = stores.map(s =>
+          `<button class="stab" data-st="${s}" onclick="filterStore('${s}')">${s}</button>`
+        ).join('');
+        // 不在这里默认选中，统一交给 restoreStore() 处理，避免覆盖用户已选门店
+      }
+    }
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="18" style="text-align:center;color:var(--txt3);padding:20px">该日期区间内无流水数据</td></tr>';
+      filterST();
+      return;
+    }
+
+    // S 前缀优先排序
+    function sortKey(c) { return (c && c[0] === 'S' ? '0' : '1') + c; }
+    rows.sort((a, b) => {
+      if (a.storeName !== b.storeName) return a.storeName.localeCompare(b.storeName, 'zh');
+      return sortKey(a.productCode).localeCompare(sortKey(b.productCode));
+    });
+
+    let html = '';
+    rows.forEach(r => {
+      const m = meta[r.productCode] || { cat: '', name: '', spec: '', unit: '', price: 0, conv: 1 };
+      const price = m.price || 0;
+      const conv = m.conv || 1;
+      const openAmt = (r.opening * price).toFixed(4);
+      const closeAmt = (r.closing * price).toFixed(4);
+      const inAmt = (r.inbound * price).toFixed(4);
+      const outAmt = (r.outbound * price).toFixed(4);
+      const openConv = conv ? (r.opening / conv).toFixed(2) : '0.00';
+      const closeConv = conv ? (r.closing / conv).toFixed(2) : '0.00';
+      const productName = (m.name && m.name !== r.productName) ? m.name : r.productName;
+      const checks = r.checks || [];
+      const checksAttr = checks.length ? ` data-checks="${encodeURIComponent(JSON.stringify(checks))}"` : '';
+      const checkBadge = checks.length ? '<span class="check-badge">盘</span>' : '';
+      const rowClass = checks.length ? ' class="has-check"' : '';
+
+      html += `<tr data-store="${r.storeName}"${checksAttr}${rowClass}>
+        <td>${r.storeName}</td><td>${m.cat}</td>
+        <td class="cn" data-product-code="${r.productCode}">${r.productCode}${checkBadge}</td><td>${productName}</td><td>${m.spec}</td><td>${m.unit}</td>
+        <td class="num">${price.toFixed(4)}</td>
+        <td class="num">${fmtQty(r.opening)}</td><td class="num">${openAmt}</td><td class="num">${openConv}</td>
+        <td class="num">${fmtQty(r.inbound)}</td><td class="num">${inAmt}</td>
+        <td class="num">${fmtQty(r.outbound)}</td><td class="num">${outAmt}</td>
+        <td class="num">${fmtQty(r.closing)}</td><td class="num">${closeAmt}</td><td class="num">${closeConv}</td>
+        <td class="num">${conv}</td>
+      </tr>`;
+    });
+
+    tbody.innerHTML = html;
+  } catch (e) {
+    console.error('加载门店数据失败:', e);
+    tbody.innerHTML = '<tr><td colspan="18" style="text-align:center;color:#ef4444;padding:20px">数据加载失败，请稍后重试</td></tr>';
+  }
+  // 恢复用户之前选中的门店 tab，并触发筛选（包含 filterST）
+  restoreStore();
+}
+
+// ============ 仓库表格动态重建（调用 /api/summary）============
+async function rebuildWHTable() {
+  const d1 = document.getElementById('wh-d1').value;
+  const d2 = document.getElementById('wh-d2').value;
+  await fetchProductMeta();
+  const meta = window._productMeta || {};
+  const tbody = document.getElementById('wh-tbody');
+
+  tbody.innerHTML = '<tr><td colspan="18" style="text-align:center;color:var(--amber);padding:20px">加载中…</td></tr>';
+  filterWH();
+
+  try {
+    const resp = await fetch(`/api/summary?startDate=${d1}&endDate=${d2}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const rows = data.rows || [];
+    window._whMeta = data.meta || { sourceCount: 0, groupCount: 0 };
+
+    // 动态填充仓库下拉选项
+    const wList = data.warehouses || [];
+    if (wList.length) {
+      const opts = ['<option value="">全部仓库</option>'];
+      opts.push(...wList.sort().map(w => `<option value="${w}">${w}</option>`));
+      document.getElementById('wh-wh').innerHTML = opts.join('');
+    }
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="18" style="text-align:center;color:var(--txt3);padding:20px">该日期区间内无流水数据</td></tr>';
+      filterWH();
+      return;
+    }
+
+    function sortKey(c) { return (c && c[0] === 'S' ? '0' : '1') + c; }
+    rows.sort((a, b) => sortKey(a.productCode).localeCompare(sortKey(b.productCode)));
+
+    let html = '';
+    rows.forEach(r => {
+      const m = meta[r.productCode] || { cat: '', name: '', spec: '', unit: '', price: 0, conv: 1 };
+      const price = m.price || 0;
+      const conv  = m.conv || 1;
+      const openAmt  = (r.opening * price).toFixed(4);
+      const openConv = conv ? (r.opening / conv).toFixed(2) : '0.00';
+      const inAmt    = (r.inbound * price).toFixed(4);
+      const outAmt   = (r.outbound * price).toFixed(4);
+      const closeAmt = (r.closing * price).toFixed(4);
+      const closeConv= conv ? (r.closing / conv).toFixed(2) : '0.00';
+      const productName = (m.name && m.name !== r.productName) ? m.name : r.productName;
+      const checks = r.checks || [];
+      const checksAttr = checks.length ? ` data-checks="${encodeURIComponent(JSON.stringify(checks))}"` : '';
+      const checkBadge = checks.length ? '<span class="check-badge">盘</span>' : '';
+      const rowClass = checks.length ? ' class="has-check"' : '';
+      html += `<tr${checksAttr}${rowClass}>
+        <td>${r.warehouse}</td><td>${m.cat}</td>
+        <td class="cn" data-product-code="${r.productCode}">${r.productCode}${checkBadge}</td><td>${productName}</td><td>${m.spec}</td><td>${m.unit}</td>
+        <td class="num">${price.toFixed(4)}</td>
+        <td class="num">${fmtQty(r.opening)}</td><td class="num">${openAmt}</td><td class="num">${openConv}</td>
+        <td class="num">${fmtQty(r.inbound)}</td><td class="num">${inAmt}</td>
+        <td class="num">${fmtQty(r.outbound)}</td><td class="num">${outAmt}</td>
+        <td class="num">${fmtQty(r.closing)}</td><td class="num">${closeAmt}</td><td class="num">${closeConv}</td>
+        <td class="num">${conv}</td>
+      </tr>`;
+    });
+
+    tbody.innerHTML = html;
+  } catch (e) {
+    console.error('加载仓库数据失败:', e);
+    tbody.innerHTML = '<tr><td colspan="18" style="text-align:center;color:#ef4444;padding:20px">数据加载失败，请稍后重试</td></tr>';
+  }
+  filterWH();
+}
+
+// ============ 导出 ============
+function exportTable(t){
+  const tbl = document.getElementById(t+'-table');
+  let csv = '';
+  for(const r of tbl.rows){
+    if(r.style.display==='none') continue;
+    if(r.parentNode.nodeName==='TFOOT') continue;
+    const cells = [];
+    for(const c of r.cells){
+      if(c.style.display==='none') continue;
+      cells.push('"'+(c.textContent||'').replace(/"/g,'""')+'"');
+    }
+    if(cells.length) csv += cells.join(',')+'\n';
+  }
+  const blob = new Blob(['\ufeff', csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = t==='wh'?'仓库汇总.csv':'门店汇总.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+// ============ 门店行点击 → 穿透明细（调用 /api/store-ledger）============
+async function openDrill(code, store, checksRaw){
+  const d1 = document.getElementById('st-d1').value;
+  const d2 = document.getElementById('st-d2').value;
+
+  document.getElementById('drill-title').textContent = '加载中…';
+  document.getElementById('drill-sub').innerHTML = '';
+  document.getElementById('drill-tbody').innerHTML = '';
+  document.getElementById('drill-empty').style.display = 'none';
+  document.getElementById('drill-modal').style.display = 'flex';
+  document.getElementById('drill-thead-tr').innerHTML =
+    `<th>数据编号</th><th>配送类型</th><th>出入库日期</th><th>性质</th>` +
+    `<th class="num">期初</th><th class="num">入库</th><th class="num">出库</th><th class="num">期末</th>`;
+
+  let checks = [];
+  if (checksRaw) {
+    try { checks = JSON.parse(decodeURIComponent(checksRaw)); } catch(e) {}
+  }
+
+  try {
+    const resp = await fetch(
+      `/api/store-ledger?startDate=${d1}&endDate=${d2}&productCode=${encodeURIComponent(code)}&storeName=${encodeURIComponent(store)}`
+    );
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const rows = data.rows || [];
+    const meta = data.meta || {};
+
+    document.getElementById('drill-title').textContent = meta.productName || code;
+    document.getElementById('drill-sub').innerHTML =
+      `<em style="color:#ff9b3d;font-style:normal">${code}</em> · ${meta.storeName || store} · ${d1} ~ ${d2} · <em style="color:#ff9b3d;font-style:normal">${rows.length + checks.length}</em> 笔`;
+
+    const tbody = document.getElementById('drill-tbody');
+    const empty = document.getElementById('drill-empty');
+    if (!rows.length && !checks.length) {
+      tbody.innerHTML = '';
+      empty.style.display = '';
+    } else {
+      empty.style.display = 'none';
+      const ledgerHtml = rows.map(r => {
+        const natClass = r.nature === '出库' ? 'nat-out' : 'nat-in';
+        const inCls = r.inbound > 0 ? 'pos' : (r.inbound < 0 ? 'neg' : 'zero');
+        const outCls = r.outbound > 0 ? 'pos' : (r.outbound < 0 ? 'neg' : 'zero');
+        const fmt = v => {
+          if (v === '' || v == null) return '0';
+          const n = Number(v);
+          if (n === 0) return '0';
+          return n.toLocaleString(undefined, {maximumFractionDigits: 2});
+        };
+        const fmtOpen = v => (v == null || v === '') ? '0' : (Number(v) === 0 ? '0' : Number(v).toLocaleString(undefined, {maximumFractionDigits: 2}));
+        const fmtClose = v => (v == null || v === '' || Number(v) === 0) ? '0' : Number(v).toLocaleString(undefined, {maximumFractionDigits: 2});
+        const deliveryTag = r.deliveryType
+          ? `<em style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600;background:#1f3a5f;color:#7dd3fc">${r.deliveryType}</em>`
+          : '—';
+        return `<tr>
+          <td>${r.applyNum || ''}</td>
+          <td>${deliveryTag}</td>
+          <td>${r.date || ''}</td>
+          <td class="${natClass}">${r.nature || ''}</td>
+          <td class="num">${fmtOpen(r.opening)}</td>
+          <td class="num ${inCls}">${fmt(r.inbound)}</td>
+          <td class="num ${outCls}">${fmt(r.outbound)}</td>
+          <td class="num">${fmtClose(r.closing)}</td>
+        </tr>`;
+      }).join('');
+
+      const checkHtml = checks.map(c => {
+        const tag = c.nature === '盘盈'
+          ? '<em style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600;background:#064e1a;color:#4ade80">盘盈</em>'
+          : c.nature === '盘点'
+          ? '<em style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600;background:#0d2137;color:#60a5fa">盘点</em>'
+          : '<em style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600;background:#4a0e0e;color:#fca5a5">盘亏</em>';
+        const qtyCls = c.nature === '盘盈' ? 'pos' : c.nature === '盘点' ? 'chk' : 'neg';
+        return `<tr style="background:#1a1f2e">
+          <td style="color:#ff9b3d">${c.period}</td>
+          <td>—</td>
+          <td>${c.date}</td>
+          <td>${tag}</td>
+          <td class="num">—</td>
+          <td class="num ${qtyCls}">${c.quantity}</td>
+          <td class="num">—</td>
+          <td class="num">—</td>
+        </tr>`;
+      }).join('');
+
+      tbody.innerHTML = ledgerHtml + checkHtml;
+    }
+  } catch (e) {
+    console.error('加载明细失败:', e);
+    document.getElementById('drill-title').textContent = '加载失败';
+    document.getElementById('drill-sub').innerHTML = '请稍后重试';
+    document.getElementById('drill-tbody').innerHTML = '';
+  }
+}
+
+function closeDrill(){
+  document.getElementById('drill-modal').style.display = 'none';
+}
+
+// ============ 仓库行点击 → 穿透明细（调用 /api/ledger）============
+async function openDrillWH(code, warehouse, checksRaw){
+  const d1 = document.getElementById('wh-d1').value;
+  const d2 = document.getElementById('wh-d2').value;
+
+  document.getElementById('drill-title').textContent = '加载中…';
+  document.getElementById('drill-sub').innerHTML = '';
+  document.getElementById('drill-tbody').innerHTML = '';
+  document.getElementById('drill-empty').style.display = 'none';
+  document.getElementById('drill-modal').style.display = 'flex';
+  document.getElementById('drill-thead-tr').innerHTML =
+    `<th>数据编号</th><th>出入库日期</th><th>性质</th>` +
+    `<th class="num">期初</th><th class="num">入库</th><th class="num">出库</th><th class="num">期末</th>`;
+
+  let checks = [];
+  if (checksRaw) {
+    try { checks = JSON.parse(decodeURIComponent(checksRaw)); } catch(e) {}
+  }
+
+  try {
+    const resp = await fetch(
+      `/api/ledger?startDate=${d1}&endDate=${d2}&productCode=${encodeURIComponent(code)}&warehouse=${encodeURIComponent(warehouse)}`
+    );
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const rows = data.rows || [];
+    const meta = data.meta || {};
+
+    document.getElementById('drill-title').textContent = meta.productName || code;
+    document.getElementById('drill-sub').innerHTML =
+      `<em style="color:#ff9b3d;font-style:normal">${code}</em> · ${meta.warehouse || warehouse} · ${d1} ~ ${d2} · <em style="color:#ff9b3d;font-style:normal">${rows.length + checks.length}</em> 笔`;
+
+    const tbody = document.getElementById('drill-tbody');
+    const empty = document.getElementById('drill-empty');
+    if (!rows.length && !checks.length) {
+      tbody.innerHTML = '';
+      empty.style.display = '';
+    } else {
+      empty.style.display = 'none';
+      const ledgerHtml = rows.map(r => {
+        const natClass = r.nature === '出库' ? 'nat-out' : 'nat-in';
+        const inCls = r.inbound > 0 ? 'pos' : (r.inbound < 0 ? 'neg' : 'zero');
+        const outCls = r.outbound > 0 ? 'pos' : (r.outbound < 0 ? 'neg' : 'zero');
+        const fmt = v => {
+          if (v === '' || v == null) return '0';
+          const n = Number(v);
+          if (n === 0) return '0';
+          return n.toLocaleString(undefined, {maximumFractionDigits: 2});
+        };
+        const fmtOpen = v => (v == null || v === '') ? '0' : (Number(v) === 0 ? '0' : Number(v).toLocaleString(undefined, {maximumFractionDigits: 2}));
+        const fmtClose = v => (v == null || v === '' || Number(v) === 0) ? '0' : Number(v).toLocaleString(undefined, {maximumFractionDigits: 2});
+        return `<tr>
+          <td>${r.applyNum || ''}</td>
+          <td>${r.date || ''}</td>
+          <td class="${natClass}">${r.nature || ''}</td>
+          <td class="num">${fmtOpen(r.opening)}</td>
+          <td class="num ${inCls}">${fmt(r.inbound)}</td>
+          <td class="num ${outCls}">${fmt(r.outbound)}</td>
+          <td class="num">${fmtClose(r.closing)}</td>
+        </tr>`;
+      }).join('');
+
+      const checkHtml = checks.map(c => {
+        const tag = c.nature === '盘盈'
+          ? '<em style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600;background:#064e1a;color:#4ade80">盘盈</em>'
+          : '<em style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:600;background:#4a0e0e;color:#fca5a5">盘亏</em>';
+        return `<tr style="background:#1a1f2e">
+          <td style="color:#ff9b3d">${c.period}</td>
+          <td>${c.date}</td>
+          <td>${tag}</td>
+          <td class="num">—</td>
+          <td class="num ${c.nature==='盘盈'?'pos':'neg'}">${c.quantity}</td>
+          <td class="num">—</td>
+          <td class="num">—</td>
+        </tr>`;
+      }).join('');
+
+      tbody.innerHTML = ledgerHtml + checkHtml;
+    }
+  } catch (e) {
+    console.error('加载仓库明细失败:', e);
+    document.getElementById('drill-title').textContent = '加载失败';
+    document.getElementById('drill-sub').innerHTML = '请稍后重试';
+    document.getElementById('drill-tbody').innerHTML = '';
+  }
+}
+
+// 点击仓库行触发穿透
+document.addEventListener('click', e => {
+  const tr = e.target.closest('#wh-tbody tr');
+  if (!tr) return;
+  const cells = tr.cells;
+  if (cells.length < 5) return;
+  const codeEl = cells[2]?.querySelector('[data-product-code]') || cells[2];
+  const code = (codeEl?.dataset?.productCode || codeEl?.textContent || '').trim();
+  const wh = (cells[0]?.textContent || '').trim();
+  const checksRaw = tr.dataset.checks;
+  if (code && wh) openDrillWH(code, wh, checksRaw);
+});
+
+// 点击门店行触发穿透
+document.addEventListener('click', e => {
+  const tr = e.target.closest('#st-tbody tr');
+  if (!tr) return;
+  const cells = tr.cells;
+  if (cells.length < 5) return;
+  const codeEl = cells[2]?.querySelector('[data-product-code]') || cells[2];
+  const code = (codeEl?.dataset?.productCode || codeEl?.textContent || '').trim();
+  const store = (cells[0]?.textContent || '').trim();
+  const checksRaw = tr.dataset.checks;
+  if (code && store) openDrill(code, store, checksRaw);
+});
+
+// 关闭弹窗：点遮罩 / 按 ESC
+document.addEventListener('click', e => {
+  if(e.target.classList && e.target.classList.contains('modal-mask')) closeDrill();
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') closeDrill();
+});
+
+// ============ 初始化 ============
+rebuildWHTable().then(() => rebuildStoreTable().then(() => {
+  recalcStoreSums();
+}));
+
+function resetFilters(which){
+  // 清空商品编号/商品名称/仓库
+  if(which === 'wh' || which === 'all'){
+    document.getElementById('wh-code').value = '';
+    document.getElementById('wh-name').value = '';
+    document.getElementById('wh-wh').value = '';
+  }
+  if(which === 'st' || which === 'all'){
+    document.getElementById('st-code').value = '';
+    document.getElementById('st-name').value = '';
+  }
+  // 重置时间为本月
+  if(window._initD1 && window._initD2 && typeof setAllDates === 'function'){
+    setAllDates(window._initD1, window._initD2);
+  }
+  // 取消时间快捷按钮高亮
+  document.querySelectorAll('#timeBar .tbtn').forEach(x => x.classList.remove('on'));
+  const monthBtn = document.querySelector('#timeBar .tbtn[data-r="month"]');
+  if(monthBtn) monthBtn.classList.add('on');
+  // 重新查询
+  if(typeof rebuildWHTable === 'function') rebuildWHTable();
+  if(typeof rebuildStoreTable === 'function'){
+    rebuildStoreTable();
+  }
+}
+</script>
+
+
+
+<div id="drill-modal" class="modal" style="display:none">
+  <div class="modal-mask"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <div class="m-eyebrow">出入库明细</div>
+        <div class="m-title" id="drill-title"></div>
+        <div class="m-sub" id="drill-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeDrill()">关闭</button>
+    </div>
+    <div class="modal-body">
+      <table class="drill-table">
+        <thead><tr id="drill-thead-tr">
+          <th>数据编号</th>
+          <th>配送类型</th>
+          <th>出入库日期</th>
+          <th>性质</th>
+          <th class="num">期初</th>
+          <th class="num">入库</th>
+          <th class="num">出库</th>
+          <th class="num">期末</th>
+        </tr></thead>
+        <tbody id="drill-tbody"></tbody>
+      </table>
+      <div id="drill-empty" class="drill-empty" style="display:none">当前条件下暂无流水记录</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

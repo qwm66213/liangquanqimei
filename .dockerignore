@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.gitignore
+
+# 数据/临时产物：仅本地分析用，不参与镜像构建
+excel-data
+pdf_images
+downloads
+icons
+data
+.codebuddy
+scripts/__recent_files.txt
+
+*.log
+*.pyc

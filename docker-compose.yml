@@ -1,0 +1,40 @@
+services:
+  liangquanqimei:
+    image: crpi-72tv8frgubni91pv.cn-shanghai.personal.cr.aliyuncs.com/liangquanqimei/liangquanqimei:v22
+    container_name: liangquanqimei
+    restart: always
+    ports:
+      - "3055:3055"
+    environment:
+      - PORT=3055
+      - QINGFLOW_ACCESS_TOKEN=${QINGFLOW_ACCESS_TOKEN}
+      - QINGFLOW_APP_KEY=${QINGFLOW_APP_KEY}
+      - QINGFLOW_STORE_APP_KEY=${QINGFLOW_STORE_APP_KEY}
+      - QINGFLOW_PRODUCT_META_APP_KEY=${QINGFLOW_PRODUCT_META_APP_KEY}
+      - QINGFLOW_BASE_URL=${QINGFLOW_BASE_URL:-https://api.qingflow.com}
+      # 二开 BPS 入库（主流程应用 e04doio3ps02，默认；测试应用 fgaeqpu8go02 已停用）
+      # QINGFLOW_INBOUND_APP_KEY=${QINGFLOW_INBOUND_APP_KEY:-}    # 已停用（测试应用）
+      # QSOURCE_RECEIVE_URL=${QSOURCE_RECEIVE_URL:-}              # 已停用（测试应用）
+      - QINGFLOW_INBOUND_APP_KEY_2=${QINGFLOW_INBOUND_APP_KEY_2:-}
+      - QSOURCE_RECEIVE_URL_2=${QSOURCE_RECEIVE_URL_2:-}
+      - BPS_ACCESS_TOKEN=${BPS_ACCESS_TOKEN:-}
+      - BPS_LOG_DIR=/app/logs
+      # 客户采购申请二开页面
+      # PURCHASE_PORTAL_SECRET 必填：入口票据签名密钥，未配置时使用进程内临时密钥（重启后链接失效）
+      - PURCHASE_PORTAL_SECRET=${PURCHASE_PORTAL_SECRET:-}
+      - PURCHASE_DATA_DIR=/app/data
+      # 内部白名单：命中即按「内部视图（全量只读）」放行（用户 ID / 角色 ID，逗号分隔）
+      - PURCHASE_ALLOWED_USER_IDS=${PURCHASE_ALLOWED_USER_IDS:-860116,2892285}
+      - PURCHASE_ALLOWED_ROLE_IDS=${PURCHASE_ALLOWED_ROLE_IDS:-}
+      # 轻流工作区 ID 与入口时间戳容忍窗口（分钟）
+      - PURCHASE_QF_WS_ID=${PURCHASE_QF_WS_ID:-180750}
+      - PURCHASE_QF_TS_WINDOW_MINUTES=${PURCHASE_QF_TS_WINDOW_MINUTES:-30}
+      - PURCHASE_DEFAULT_KEEPER=${PURCHASE_DEFAULT_KEEPER:-范娅娅}
+      # 顺丰仓出库接口（暂未接入，留空时总部审批通过后只置「待出库」并记录待发请求）
+      - PURCHASE_SF_SHIPPING_URL=${PURCHASE_SF_SHIPPING_URL:-}
+      - PURCHASE_SF_SHIPPING_TOKEN=${PURCHASE_SF_SHIPPING_TOKEN:-}
+    volumes:
+      # 持久化 BPS 请求日志（完整原始报文），宿主机 ./logs
+      - ./logs:/app/logs
+      # 持久化客户采购申请的审批状态与审批日志，宿主机 ./data
+      - ./data:/app/data
